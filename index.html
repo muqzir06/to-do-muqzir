@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TermiTodo // Interactive CLI & GUI To-Do Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- CSS stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-cyberpunk">
+    <!-- CRT Effect Scanlines Overlay -->
+    <div id="crt-overlay" class="crt-overlay active"></div>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="logo-icon">⚡</span>
+                <div class="logo-text">
+                    <h1>TermiTodo</h1>
+                    <p class="subtitle">The CLI-GUI Dual State Engine</p>
+                </div>
+            </div>
+            <div class="system-status">
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span id="connection-status">LOCAL PERSISTENCE: ON</span>
+                </div>
+                <div class="quick-theme-picker">
+                    <label for="theme-select">Theme:</label>
+                    <select id="theme-select">
+                        <option value="cyberpunk">Cyberpunk Neon</option>
+                        <option value="matrix">Matrix Digital</option>
+                        <option value="dracula">Dracula Dark</option>
+                        <option value="synthwave">Synthwave Glow</option>
+                        <option value="slate">Minimalist Slate</option>
+                    </select>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="dashboard-grid">
+            
+            <!-- LEFT SECTION: CLI TERMINAL -->
+            <section class="panel terminal-panel">
+                <div class="panel-header terminal-header">
+                    <div class="window-controls">
+                        <span class="dot red"></span>
+                        <span class="dot yellow"></span>
+                        <span class="dot green"></span>
+                    </div>
+                    <div class="window-title">guest@termitodo: ~ (localStorage)</div>
+                    <div class="terminal-actions">
+                        <button id="toggle-crt-btn" class="action-btn active" title="Toggle retro CRT scanlines">CRT</button>
+                        <button id="clear-term-btn" class="action-btn" title="Clear terminal screen">Clear</button>
+                    </div>
+                </div>
+                
+                <div class="terminal-body" id="terminal-body">
+                    <div class="welcome-message">
+                        <pre class="ascii-art">
+ _____              _ _____         _     
+|_   _|___ ___ _ _|_|_____|___ _ _|_|___ 
+  | | | -_|  _| | | |  _  | . | | | |   |
+  |_| |___|_| |_  |_|_____|___|___|_|_|_|
+              |___|                      
+                        </pre>
+                        <p>Welcome to <strong>TermiTodo v1.0.0</strong> — A developer's task engine.</p>
+                        <p>Type <span class="cmd-highlight">help</span> or <span class="cmd-highlight">todo help</span> to view available commands. Use Up/Down arrows for command history.</p>
+                        <p class="text-muted">Changes made here automatically update the dashboard, and vice-versa.</p>
+                        <hr class="terminal-divider">
+                    </div>
+                    
+                    <div id="terminal-output">
+                        <!-- Terminal history lines will be appended here dynamically -->
+                    </div>
+                    
+                    <!-- Prompt Line -->
+                    <div class="prompt-line">
+                        <span class="prompt-prefix">guest@termitodo:~$</span>
+                        <div class="input-wrapper">
+                            <span id="prompt-command-display" class="prompt-display"></span>
+                            <span id="autocomplete-suggestion" class="autocomplete-suggestion"></span>
+                            <input type="text" id="terminal-input" autofocus autocomplete="off" spellcheck="false">
+                            <span class="cursor"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Terminal bottom shortcut list -->
+                <div class="terminal-footer">
+                    <span class="footer-lbl">Quick Command Guide:</span>
+                    <span class="footer-cmd">todo add "Title" --priority high</span>
+                    <span class="footer-cmd">todo list</span>
+                    <span class="footer-cmd">todo done &lt;id&gt;</span>
+                    <span class="footer-cmd">todo export</span>
+                </div>
+            </section>
+
+            <!-- RIGHT SECTION: VISUAL GUI DASHBOARD -->
+            <section class="panel dashboard-panel">
+                <div class="panel-header">
+                    <h2>Task Monitor Dashboard</h2>
+                    <div class="dashboard-actions">
+                        <button id="export-btn" class="btn btn-secondary">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                            Export Backup
+                        </button>
+                        <button id="import-btn-trigger" class="btn btn-secondary">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                            Import Backup
+                        </button>
+                        <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- STATS PANELS -->
+                <div class="stats-row">
+                    <div class="stat-card ring-card">
+                        <div class="radial-progress-container">
+                            <svg class="radial-progress" viewBox="0 0 36 36">
+                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="progress-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <div class="radial-percentage" id="completion-rate">0%</div>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Completion Rate</h3>
+                            <p>Efficiency Level</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <span class="stat-icon total-icon">📂</span>
+                        <div class="stat-data">
+                            <span class="stat-value" id="stat-total">0</span>
+                            <span class="stat-label">Total Tasks</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <span class="stat-icon pending-icon">⌛</span>
+                        <div class="stat-data">
+                            <span class="stat-value" id="stat-pending">0</span>
+                            <span class="stat-label">Pending</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <span class="stat-icon completed-icon">✔</span>
+                        <div class="stat-data">
+                            <span class="stat-value" id="stat-completed">0</span>
+                            <span class="stat-label">Completed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FILTER BAR -->
+                <div class="filter-bar">
+                    <div class="search-box">
+                        <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="gui-search-input" placeholder="Search tasks by name or tag...">
+                    </div>
+                    <div class="filter-pills">
+                        <button class="filter-pill active" data-filter="all">All</button>
+                        <button class="filter-pill" data-filter="active">Active</button>
+                        <button class="filter-pill" data-filter="completed">Completed</button>
+                        <button class="filter-pill" data-filter="high">High Priority</button>
+                    </div>
+                </div>
+
+                <!-- QUICK ADD FORM -->
+                <div class="quick-add-section">
+                    <form id="quick-add-form" class="quick-add-form">
+                        <input type="text" id="quick-add-input" placeholder="Quick Add Task... (e.g. Write documentation)" required>
+                        <select id="quick-add-priority">
+                            <option value="low">Low Priority</option>
+                            <option value="medium" selected>Medium Priority</option>
+                            <option value="high">High Priority</option>
+                        </select>
+                        <input type="text" id="quick-add-tags" placeholder="tags (comma separated)">
+                        <button type="submit" class="btn btn-primary">Add Task</button>
+                    </form>
+                </div>
+
+                <!-- TO-DO LIST CONTAINER -->
+                <div class="task-list-outer">
+                    <div class="task-list" id="task-list">
+                        <!-- Task cards will be inserted here dynamically -->
+                    </div>
+                    <div class="empty-state" id="empty-state" style="display: none;">
+                        <div class="empty-icon">📂</div>
+                        <h3>No Tasks Found</h3>
+                        <p>Add some tasks via the Quick Add bar or type <span class="cmd-highlight">todo add</span> in the terminal!</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- FOOTER / DROP ZONE -->
+        <footer class="app-footer-bar">
+            <div>
+                Built for power-users. Drag and drop any <code>todo.json</code> file anywhere onto this window to import tasks.
+            </div>
+            <div>
+                System time: <span id="clock-display">00:00:00 AM</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- SCRIPT -->
+    <script src="app.js"></script>
+</body>
+</html>
